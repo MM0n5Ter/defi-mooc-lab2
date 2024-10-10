@@ -250,12 +250,21 @@ contract LiquidationOperator is IUniswapV2Callee {
         //address USDC_WETH_Pair = factory.getPair(USDC, WETH);
         address USDC_WETH_Pair = 0x397FF1542f962076d0BFE58eA045FfA2d347ACa0;
 
-        uint256 amountInUSDT = 2922714318466; //num of borrowed
+        uint256 amountInUSDT = 2922714318468; //num of borrowed
+        console.log("Fisrt we have USDT: ", amountInUSDT);
         uint256 amountInUSDC = curvePool.get_dy(1, 2, amountInUSDT);
-        
+        console.log("Exchange it to USDC: ", amountInUSDC);
         //bytes memory data = abi.encode(target);
 
         (uint reserve0, uint reserve1,) = IUniswapV2Pair(USDC_WETH_Pair).getReserves();
+
+        console.log("===================================================");
+        console.log("[V] Choose Sushiswap USDC_WETH pool, reserve below");
+        console.log(reserve0, " ", reserve1);
+        (uint Treserve0, uint Treserve1,) = IUniswapV2Pair(factory.getPair(USDC, WETH)).getReserves();
+        console.log("[X] Choose UniswapV2 USDC_WETH pool, reserve below");
+        console.log(Treserve0, " ", Treserve1);
+
         uint256 amountToRepayETH = getAmountIn(amountInUSDC, reserve1, reserve0);
         // 1. get the target user account data & make sure it is liquidatable
         //    *** Your code here ***
@@ -266,8 +275,11 @@ contract LiquidationOperator is IUniswapV2Callee {
         // we should borrow USDT, liquidate the target user and get the WBTC, then swap WBTC to repay uniswap
         // (please feel free to develop other workflows as long as they liquidate the target user successfully)
         //    *** Your code here ***
-        IUniswapV2Pair(USDC_WETH_Pair).swap(amountInUSDC, 0, address(this), abi.encodePacked(amountToRepayETH));
 
+        // for (uint256 index = 0; index < 2; index++) {
+            IUniswapV2Pair(USDC_WETH_Pair).swap(amountInUSDC, 0, address(this), abi.encodePacked(amountToRepayETH));
+        // }
+        
         // 3. Convert the profit into ETH and send back to sender
         //    *** Your code here ***
         uint256 profit = IERC20(WETH).balanceOf(address(this));
@@ -294,10 +306,10 @@ contract LiquidationOperator is IUniswapV2Callee {
         IERC20(USDC).approve(DAI_USDC_USDT_curvePool, type(uint256).max);
         curvePool.exchange(1, 2, usdcBorrowed, 0);
         uint256 usdtGot = IERC20(USDT).balanceOf(address(this));
+        console.log("USDT Got:", usdtGot);
 
         IERC20(USDT).approve(aaveLendingPool, usdtGot);
         lendingPool.liquidationCall(WBTC, USDT, target, usdtGot, false);
-
         // 2.2 swap WBTC for other things or repay directly
         //    *** Your code here ***
         uint256 amountWBTC = IERC20(WBTC).balanceOf(address(this));
@@ -305,7 +317,14 @@ contract LiquidationOperator is IUniswapV2Callee {
         // console.log(WBTC_WETH_Pair);
         address WBTC_WETH_Pair = 0xCEfF51756c56CeFFCA006cD410B03FFC46dd3a58;
         (uint256 reserve0, uint256 reserve1, ) = IUniswapV2Pair(WBTC_WETH_Pair).getReserves();
-        uint256 amountTakenETH = getAmountOut(amountWBTC, reserve0, reserve1);
+        uint256 amountTakenETH = getAmountOut(amountWBTC*2/3, reserve0, reserve1);
+        IERC20(WBTC).transfer(WBTC_WETH_Pair, amountWBTC*2/3);
+        IUniswapV2Pair(WBTC_WETH_Pair).swap(0, amountTakenETH, address(this), new bytes(0));
+
+        amountWBTC = IERC20(WBTC).balanceOf(address(this));
+        WBTC_WETH_Pair = factory.getPair(WBTC, WETH);
+        (reserve0, reserve1, ) = IUniswapV2Pair(WBTC_WETH_Pair).getReserves();
+        amountTakenETH = getAmountOut(amountWBTC, reserve0, reserve1);
         IERC20(WBTC).transfer(WBTC_WETH_Pair, amountWBTC);
         IUniswapV2Pair(WBTC_WETH_Pair).swap(0, amountTakenETH, address(this), new bytes(0));
 
