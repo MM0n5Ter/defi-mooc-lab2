@@ -1,4 +1,4 @@
-current best: 93.800677348748822367
+current best: 109.147356261287159613
 
 # Hands-on Exercise: Flash Loan based Liquidation
 

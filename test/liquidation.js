@@ -25,7 +25,7 @@ describe("Liquidation", function () {
         params: [liquidator],
     }));
 
-    const LiquidationOperator = await ethers.getContractFactory("LiquidationOperator");
+    const LiquidationOperator = await ethers.getContractFactory("OptimalFixedSpreadLiquidation");
     const liquidationOperator = await LiquidationOperator.deploy(overrides = {gasPrice: gasPrice});
     await liquidationOperator.deployed();
 
@@ -45,7 +45,8 @@ describe("Liquidation", function () {
         method: "eth_getBalance",
         params: [liquidator],
     }));
-
+    
+    console.log("Before:", utils.formatEther(beforeLiquidationBalance));
     const profit = afterLiquidationBalance.sub(beforeLiquidationBalance);
     console.log("Profit", utils.formatEther(profit), "ETH");
 
