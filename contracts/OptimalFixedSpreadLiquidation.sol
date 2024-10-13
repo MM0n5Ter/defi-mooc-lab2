@@ -28,6 +28,7 @@ contract OptimalFixedSpreadLiquidation is IUniswapV2Callee {
 
     address public constant USDC_WETH_Pair = 0x397FF1542f962076d0BFE58eA045FfA2d347ACa0;
     address public constant WETH_USDT_Pair = 0x06da0fd433C1A5d7a4faa01111c044910A184553;
+    address public constant WBTC_WETH_Pair = 0xCEfF51756c56CeFFCA006cD410B03FFC46dd3a58;
 
     address public constant target = 0x59CE4a2AC5bC3f5F225439B2993b86B42f6d3e9F;
     address private immutable owner;
@@ -64,11 +65,13 @@ contract OptimalFixedSpreadLiquidation is IUniswapV2Callee {
 
         
 
-        uint256 amountInUSDC = 654363779479; // +2919580190499; //num of borrowed
+        // uint256 amountInUSDC = 654363779479; // +2919580190499; //num of borrowed
         // uint256 amountInUSDC = 2919579787218;
+        uint256 amountInWBTC = 1920868904;
         
         
-        IUniswapV2Pair(WETH_USDT_Pair).swap(0,653652703884,address(this),abi.encodePacked(uint256(1)));
+        // IUniswapV2Pair(WETH_USDT_Pair).swap(0,653652703884,address(this),abi.encodePacked(uint256(1)));
+        IUniswapV2Pair(WBTC_WETH_Pair).swap(amountInWBTC,0,address(this),abi.encodePacked(uint256(3)));
         IUniswapV2Pair(USDC_WETH_Pair).swap(2919580190499,0,address(this),abi.encodePacked(uint256(2)));
 
         uint256 profit = IERC20(WETH).balanceOf(address(this));
@@ -107,7 +110,6 @@ contract OptimalFixedSpreadLiquidation is IUniswapV2Callee {
 
             uint amountLINK = IERC20(LINK).balanceOf(address(this));
             address LINK_WETH_Pair = 0xC40D16476380e4037e6b1A2594cAF6a6cc8Da967;
-            // address WBTC_WETH_Pair = 0xCEfF51756c56CeFFCA006cD410B03FFC46dd3a58;
             (reserve0, reserve1, ) = IUniswapV2Pair(LINK_WETH_Pair).getReserves();
             uint256 amountTakenETH = getAmountOut(amountLINK*2/3, reserve0, reserve1);
             IERC20(LINK).transfer(LINK_WETH_Pair, amountLINK*2/3);
@@ -153,6 +155,31 @@ contract OptimalFixedSpreadLiquidation is IUniswapV2Callee {
             IERC20(WBTC).transfer(WBTC_WETH_Pair, amountWBTC);
             IUniswapV2Pair(WBTC_WETH_Pair).swap(0, amountTakenETH, address(this), new bytes(0));
 
+        }else if(round == 3) {
+            console.log("WBTC got: ", amount0);
+            (uint reserve0, uint reserve1, ) = IUniswapV2Pair(WBTC_WETH_Pair).getReserves();
+            amountToRepayETH = getAmountIn(amount0,reserve1,reserve0);
+            SafeERC20.forceApprove(IERC20(WBTC), aaveLendingPool, type(uint256).max);
+            lendingPool.liquidationCall(LINK, WBTC, target, amount0, false);
+            (,,,,,uint256 healthFactor) = lendingPool.getUserAccountData(target);
+            // console.log("collateral: ", totalCollateralETH);
+            // console.log("debt: ", totalDebtETH);
+            console.log("healthFactor: ", healthFactor);
+
+            uint amountLINK = IERC20(LINK).balanceOf(address(this));
+            address LINK_WETH_Pair = 0xC40D16476380e4037e6b1A2594cAF6a6cc8Da967;
+            (reserve0, reserve1, ) = IUniswapV2Pair(LINK_WETH_Pair).getReserves();
+            uint256 amountTakenETH = getAmountOut(amountLINK*2/3, reserve0, reserve1);
+            IERC20(LINK).transfer(LINK_WETH_Pair, amountLINK*2/3);
+            IUniswapV2Pair(LINK_WETH_Pair).swap(0, amountTakenETH, address(this), new bytes(0));
+
+            amountLINK = IERC20(LINK).balanceOf(address(this));
+            LINK_WETH_Pair = factory.getPair(LINK, WETH);
+            (reserve0, reserve1, ) = IUniswapV2Pair(LINK_WETH_Pair).getReserves();
+            amountTakenETH = getAmountOut(amountLINK, reserve0, reserve1);
+            IERC20(LINK).transfer(LINK_WETH_Pair, amountLINK);
+            IUniswapV2Pair(LINK_WETH_Pair).swap(0, amountTakenETH, address(this), new bytes(0));
+
         }
         
         // 2.3 repay
@@ -170,6 +197,7 @@ contract OptimalFixedSpreadLiquidation is IUniswapV2Callee {
         printData(WETH, target);
         printData(USDC, target);
         printData(USDT, target);
+        printData(DAI, target);
     }
 
     function printData(address asset, address tar) internal{
