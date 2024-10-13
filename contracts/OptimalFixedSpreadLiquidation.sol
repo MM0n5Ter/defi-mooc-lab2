@@ -67,12 +67,12 @@ contract OptimalFixedSpreadLiquidation is IUniswapV2Callee {
 
         // uint256 amountInUSDC = 654363779479; // +2919580190499; //num of borrowed
         // uint256 amountInUSDC = 2919579787218;
-        uint256 amountInWBTC = 1920868904;
+        uint256 amountInWBTC = 1920877272;
         
         
         // IUniswapV2Pair(WETH_USDT_Pair).swap(0,653652703884,address(this),abi.encodePacked(uint256(1)));
         IUniswapV2Pair(WBTC_WETH_Pair).swap(amountInWBTC,0,address(this),abi.encodePacked(uint256(3)));
-        IUniswapV2Pair(USDC_WETH_Pair).swap(2919580190499,0,address(this),abi.encodePacked(uint256(2)));
+        IUniswapV2Pair(USDC_WETH_Pair).swap(2919569392158,0,address(this),abi.encodePacked(uint256(2)));
 
         uint256 profit = IERC20(WETH).balanceOf(address(this));
         IWETH(WETH).withdraw(profit);
@@ -210,6 +210,8 @@ contract OptimalFixedSpreadLiquidation is IUniswapV2Callee {
             bool usageAsCollateralEnabled
         ) = PDP.getUserReserveData(asset, tar);
         console.log(currentATokenBalance, currentStableDebt, currentVariableDebt, usageAsCollateralEnabled);
+        (uint256 availableLiquidity,,,uint256 liquidityRate,,,,,,) = PDP.getReserveData(asset);
+        console.log(availableLiquidity, liquidityRate);
     }
 
         // some helper function, it is totally fine if you can finish the lab without using these function
