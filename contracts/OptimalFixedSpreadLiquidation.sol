@@ -144,8 +144,8 @@ contract OptimalFixedSpreadLiquidation is IUniswapV2Callee {
             address WBTC_WETH_Pair = 0xCEfF51756c56CeFFCA006cD410B03FFC46dd3a58;
             uint256 amountWBTC = IERC20(WBTC).balanceOf(address(this));
             (reserve0, reserve1, ) = IUniswapV2Pair(WBTC_WETH_Pair).getReserves();
-            uint amountTakenETH = getAmountOut(amountWBTC*2/3, reserve0, reserve1);
-            IERC20(WBTC).transfer(WBTC_WETH_Pair, amountWBTC*2/3);
+            uint amountTakenETH = getAmountOut(amountWBTC*3/4, reserve0, reserve1);
+            IERC20(WBTC).transfer(WBTC_WETH_Pair, amountWBTC*3/4);
             IUniswapV2Pair(WBTC_WETH_Pair).swap(0, amountTakenETH, address(this), new bytes(0));
 
             amountWBTC = IERC20(WBTC).balanceOf(address(this));
@@ -169,8 +169,8 @@ contract OptimalFixedSpreadLiquidation is IUniswapV2Callee {
             uint amountLINK = IERC20(LINK).balanceOf(address(this));
             address LINK_WETH_Pair = 0xC40D16476380e4037e6b1A2594cAF6a6cc8Da967;
             (reserve0, reserve1, ) = IUniswapV2Pair(LINK_WETH_Pair).getReserves();
-            uint256 amountTakenETH = getAmountOut(amountLINK*2/3, reserve0, reserve1);
-            IERC20(LINK).transfer(LINK_WETH_Pair, amountLINK*2/3);
+            uint256 amountTakenETH = getAmountOut(amountLINK*3/5, reserve0, reserve1);
+            IERC20(LINK).transfer(LINK_WETH_Pair, amountLINK*3/5);
             IUniswapV2Pair(LINK_WETH_Pair).swap(0, amountTakenETH, address(this), new bytes(0));
 
             amountLINK = IERC20(LINK).balanceOf(address(this));
